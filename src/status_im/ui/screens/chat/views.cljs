@@ -43,6 +43,19 @@
                                                             [sheets/actions current-chat])
                                                  :height  256}])}]}]))
 
+(defn invitation-requests [chat-id admins]
+  (let [current-pk @(re-frame/subscribe [:multiaccount/public-key])
+        admin? (get admins current-pk)]
+    (when admin?
+      (let [invitations @(re-frame/subscribe [:group-chat/pending-invitations-by-chat-id chat-id])]
+        (when (seq invitations)
+          [react/touchable-highlight
+           {:on-press            #(re-frame/dispatch [:navigate-to :group-chat-invite])
+            :accessibility-label :invitation-requests-button}
+           [react/view {:style (style/add-contact)}
+            [react/text {:style style/add-contact-text}
+             (i18n/label :t/group-membership-request)]]])))))
+
 (defn add-contact-bar [public-key]
   (let [added? @(re-frame/subscribe [:contacts/contact-added? public-key])]
     (when-not added?
@@ -58,6 +71,7 @@
 (defn chat-intro [{:keys [chat-id
                           chat-name
                           group-chat
+                          invitation-admin
                           contact-name
                           public?
                           color
@@ -77,6 +91,7 @@
    ;; Description section
    (if group-chat
      [chat.group/group-chat-description-container {:chat-id chat-id
+                                                   :invitation-admin invitation-admin
                                                    :loading-messages? loading-messages?
                                                    :chat-name chat-name
                                                    :public? public?
@@ -94,7 +109,7 @@
     (chat-intro (assoc opts :contact-name contact-name))))
 
 (defn chat-intro-header-container
-  [{:keys [group-chat
+  [{:keys [group-chat invitation-admin
            might-have-join-time-messages?
            color chat-id chat-name
            public?]}
@@ -107,6 +122,7 @@
    (let [opts
          {:chat-id chat-id
           :group-chat group-chat
+          :invitation-admin invitation-admin
           :chat-name chat-name
           :public? public?
           :color color
@@ -135,7 +151,7 @@
 
 (defn messages-view
   [{:keys [chat bottom-space pan-responder space-keeper]}]
-  (let [{:keys [group-chat chat-id public?]} chat
+  (let [{:keys [group-chat chat-id public? invitation-admin]} chat
 
         messages           @(re-frame/subscribe [:chats/current-chat-messages-stream])
         no-messages?       @(re-frame/subscribe [:chats/current-chat-no-messages?])
@@ -146,7 +162,7 @@
       {:key-fn                       #(or (:message-id %) (:value %))
        :ref                          #(reset! messages-list-ref %)
        :header                       (when (and group-chat (not public?))
-                                       [chat.group/group-chat-footer chat-id])
+                                       [chat.group/group-chat-footer chat-id invitation-admin])
        :footer                       [:<>
                                       [chat-intro-header-container chat no-messages?]
                                       (when (and (not group-chat) (not public?))
@@ -219,13 +235,14 @@
                            (when panel
                              (js/setTimeout #(react/dismiss-keyboard!) 100)))]
     (fn []
-      (let [{:keys [chat-id show-input? group-chat] :as current-chat}
+      (let [{:keys [chat-id show-input? group-chat admins] :as current-chat}
             @(re-frame/subscribe [:chats/current-chat])]
         [react/view {:style {:flex 1}}
          [connectivity/connectivity
           [topbar]
           [react/view {:style {:flex 1}}
-           (when-not group-chat
+           (if group-chat
+             [invitation-requests chat-id admins]
              [add-contact-bar chat-id])
            [messages-view {:chat          current-chat
                            :bottom-space  (max @bottom-space @panel-space)

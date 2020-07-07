@@ -49,8 +49,10 @@
    "shhext_addMembersToGroupChat" {}
    "shhext_removeMemberFromGroupChat" {}
    "shhext_leaveGroupChat" {}
+   "shhext_removeGroupChat" {}
    "shhext_changeGroupChatName" {}
    "shhext_createGroupChatWithMembers" {}
+   "shhext_createGroupChatFromInvitationLink" {}
    "shhext_reSendChatMessage" {}
    "shhext_getOurInstallations" {}
    "shhext_setInstallationMetadata" {}
@@ -89,6 +91,9 @@
    "shhext_sendTransaction" {}
    "shhext_acceptRequestTransaction" {}
    "shhext_signMessageWithChatKey" {}
+   "shhext_sendGroupChatInvitationRequest" {}
+   "shhext_sendGroupChatInvitationRejection" {}
+   "shhext_getGroupChatInvitations" {}
    "wakuext_post" {}
    "wakuext_startMessenger" {}
    "wakuext_sendPairInstallation" {}
@@ -104,8 +109,10 @@
    "wakuext_addMembersToGroupChat" {}
    "wakuext_removeMemberFromGroupChat" {}
    "wakuext_leaveGroupChat" {}
+   "wakuext_removeGroupChat" {}
    "wakuext_changeGroupChatName" {}
    "wakuext_createGroupChatWithMembers" {}
+   "wakuext_createGroupChatFromInvitationLink" {}
    "wakuext_reSendChatMessage" {}
    "wakuext_getOurInstallations" {}
    "wakuext_setInstallationMetadata" {}
@@ -144,6 +151,9 @@
    "wakuext_sendTransaction" {}
    "wakuext_acceptRequestTransaction" {}
    "wakuext_signMessageWithChatKey" {}
+   "wakuext_sendGroupChatInvitationRequest" {}
+   "wakuext_sendGroupChatInvitationRejection" {}
+   "wakuext_getGroupChatInvitations" {}
    "status_chats" {}
    "wallet_getTransfers" {}
    "wallet_getTokensBalances" {}

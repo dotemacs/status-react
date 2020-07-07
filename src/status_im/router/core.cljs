@@ -10,7 +10,8 @@
             [status-im.ethereum.resolver :as resolver]
             [status-im.ethereum.stateofus :as stateofus]
             [cljs.spec.alpha :as spec]
-            [status-im.ethereum.core :as ethereum]))
+            [status-im.ethereum.core :as ethereum]
+            [status-im.utils.db :as utils.db]))
 
 (def ethereum-scheme "ethereum:")
 
@@ -27,6 +28,9 @@
 (def browser-extractor {[#"(.*)" :domain] {""  :browser
                                            "/" :browser}})
 
+(def group-chat-extractor {[#"(.*)" :params] {""  :group-chat
+                                              "/" :group-chat}})
+
 (def eip-extractor {#{[:prefix "-" :address]
                       [:address]}
                     {#{["@" :chain-id] ""}
@@ -38,6 +42,7 @@
                                   "b/"                    browser-extractor
                                   "browser/"              browser-extractor
                                   ["p/" :chat-id]         :private-chat
+                                  "g/"                    group-chat-extractor
                                   ["u/" :user-id]         :user
                                   ["user/" :user-id]      :user
                                   ["referral/" :referrer] :referrals}
@@ -86,6 +91,22 @@
      :topic chat-id}
     {:type  :public-chat
      :error :invalid-topic}))
+
+(defn match-group-chat [uri _]
+  ;;TODO there is a bug in bidi, so we have to parse uri manually here
+  (let [[_ params] (when (not (string/blank? uri)) (string/split uri #"/g/"))
+        [admin-pk encoded-chat-name chat-id]  (when (not (string/blank? params)) (string/split params #"&"))
+        chat-id-parts (when (not (string/blank? chat-id)) (string/split chat-id #"-"))
+        chat-name (when (not (string/blank? encoded-chat-name)) (js/decodeURI encoded-chat-name))]
+    (if (and (not (string/blank? chat-id)) (not (string/blank? admin-pk)) (not (string/blank? chat-name))
+             (not (string/blank? (first chat-id-parts)))
+             (utils.db/valid-public-key? admin-pk)
+             (utils.db/valid-public-key? (last chat-id-parts)))
+      {:type             :group-chat
+       :chat-id          chat-id
+       :invitation-admin admin-pk
+       :chat-name        chat-name}
+      {:error :invalid-group-chat-data})))
 
 (defn match-private-chat-async [chain {:keys [chat-id]} cb]
   (match-contact-async chain
@@ -160,6 +181,9 @@
 
       (= handler :private-chat)
       (match-private-chat-async chain route-params cb)
+
+      (= handler :group-chat)
+      (cb (match-group-chat uri route-params))
 
       (spec/valid? :global/public-key uri)
       (match-contact-async chain {:user-id uri} cb)

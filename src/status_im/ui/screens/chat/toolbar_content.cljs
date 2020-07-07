@@ -29,6 +29,7 @@
 
 (defview toolbar-content-view []
   (letsubs [{:keys [group-chat
+                    invitation-admin
                     color
                     chat-id
                     contacts
@@ -47,6 +48,6 @@
          [one-to-one-name chat-id])]
       (when-not group-chat
         [contact-indicator chat-id])
-      (when group-chat
+      (when (and group-chat (not invitation-admin))
         [group-last-activity {:contacts   contacts
                               :public?    public?}])]]))

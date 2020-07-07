@@ -24,7 +24,6 @@
     "add-contact": "Add contact",
     "add-custom-token": "Add custom token",
     "add-mailserver": "Add mailserver",
-    "add-members": "Add members",
     "add-network": "Add network",
     "add-to-contacts": "Add to contacts",
     "add-to-contacts-text": "By adding a user to your contact list, you share your wallet address",
@@ -1215,5 +1214,17 @@
     "audio": "Audio",
     "update-to-see-image": "Update to latest version to see a nice image here!",
     "update-to-listen-audio": "Update to latest version to listen to an audio message here!",
-    "update-to-see-sticker": "Update to latest version to see a nice sticker here!"
+    "update-to-see-sticker": "Update to latest version to see a nice sticker here!",
+    "accept": "Accept",
+    "group-invite": "Group invite",
+    "group-invite-link": "Group invite link",
+    "pending-invitations": "Pending invitations",
+    "empty-pending-invitations-descr": "People who wish to join the group\nvia an invite link will appear here",
+    "introduce-yourself": "Introduce yourself with a brief message",
+    "request-pending": "Request pending…",
+    "membership-declined": "Membership request was declined",
+    "remove-group": "Remove group",
+    "request-membership": "Request membership",
+    "membership-description": "Group membership requires you to be accepted by the group admin",
+    "group-membership-request": "Group membership request"
 }

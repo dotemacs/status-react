@@ -6,7 +6,10 @@
             [status-im.ui.screens.chat.styles.main :as style]
             [status-im.i18n :as i18n]
             [status-im.ui.components.list-selection :as list-selection]
-            [status-im.ui.components.colors :as colors])
+            [status-im.ui.components.colors :as colors]
+            [reagent.core :as reagent]
+            [clojure.string :as string]
+            [status-im.ui.components.toolbar :as toolbar])
   (:require-macros [status-im.utils.views :refer [defview letsubs]]))
 
 (defn join-chat-button [chat-id]
@@ -22,14 +25,77 @@
    [react/text {:style style/decline-chat}
     (i18n/label :t/group-chat-decline-invitation)]])
 
+(defn request-membership [_]
+  (let [message (reagent/atom "")
+        retry? (reagent/atom false)]
+    (fn [{:keys [rejection introduction-message chat-id] :as invitation}]
+      [react/view {:margin-horizontal 16 :margin-top 10}
+       (cond
+         (and invitation (not rejection) (not @retry?))
+         [react/view
+          [react/text (i18n/label :t/introduce-yourself)]
+          [react/text {:style {:margin-top         10 :margin-bottom 16 :height 66
+                               :padding-horizontal 16 :padding-vertical 11
+                               :border-color       colors/gray-lighter :border-width 1
+                               :border-radius      8
+                               :color              colors/gray}}
+           introduction-message]
+          [react/text {:style {:align-self :flex-end :margin-bottom 30
+                               :color      colors/gray}}
+           (str (count introduction-message) "/100")]
+          [toolbar/toolbar {:show-border? true
+                            :center
+                            [quo/button
+                             {:type     :secondary
+                              :disabled true}
+                             (i18n/label :t/request-pending)]}]]
+
+         (and invitation rejection (not @retry?))
+         [react/view
+          [react/text {:style {:align-self :center :margin-bottom 30}}
+           (i18n/label :t/membership-declined)]
+          [toolbar/toolbar {:show-border? true
+                            :right
+                            [quo/button
+                             {:type     :secondary
+                              :on-press #(reset! retry? true)}
+                             (i18n/label :t/mailserver-retry)]
+                            :left
+                            [quo/button
+                             {:type     :secondary
+                              :on-press #(re-frame/dispatch [:group-chats.ui/remove-chat-confirmed chat-id])}
+                             (i18n/label :t/remove-group)]}]]
+         :else
+         [react/view
+          [react/text (i18n/label :t/introduce-yourself)]
+          [quo/text-input {:placeholder     (i18n/label :t/message)
+                           :on-change-text  #(reset! message %)
+                           :max-length      100
+                           :multiline       true
+                           :container-style {:margin-top 10 :margin-bottom 16}}]
+          [react/text {:style {:align-self :flex-end :margin-bottom 30}}
+           (str (count @message) "/100")]
+          [toolbar/toolbar {:show-border? true
+                            :center
+                            [quo/button
+                             {:type     :secondary
+                              :disabled (string/blank? @message)
+                              :on-press #(do
+                                           (reset! retry? false)
+                                           (re-frame/dispatch [:send-group-chat-membership-request @message]))}
+                             (i18n/label :t/request-membership)]}]])])))
+
 (defview group-chat-footer
-  [chat-id]
-  (letsubs [{:keys [joined?]} [:group-chat/inviter-info chat-id]]
-    (when-not joined?
-      [react/view {:style style/group-chat-join-footer}
-       [react/view {:style style/group-chat-join-container}
-        [join-chat-button chat-id]
-        [decline-chat chat-id]]])))
+  [chat-id invitation-admin]
+  (letsubs [{:keys [joined?]} [:group-chat/inviter-info chat-id]
+            invitations [:group-chat/invitations-by-chat-id chat-id]]
+    (if invitation-admin
+      [request-membership (first invitations)]
+      (when-not joined?
+        [react/view {:style style/group-chat-join-footer}
+         [react/view {:style style/group-chat-join-container}
+          [join-chat-button chat-id]
+          [decline-chat chat-id]]]))))
 
 (def group-chat-description-loading
   [react/view {:style (merge style/intro-header-description-container
@@ -96,8 +162,13 @@
       :else
       [created-group-chat-description chat-name])))
 
+(defn group-chat-membership-description []
+  [react/text {:style {:text-align :center :margin-horizontal 30}}
+   (i18n/label :t/membership-description)])
+
 (defn group-chat-description-container
   [{:keys [public?
+           invitation-admin
            chat-id
            chat-name
            loading-messages?
@@ -107,6 +178,9 @@
 
         (and no-messages? public?)
         [no-messages-group-chat-description-container chat-id]
+
+        invitation-admin
+        [group-chat-membership-description]
 
         (not public?)
         [group-chat-inviter-description-container chat-id chat-name]))

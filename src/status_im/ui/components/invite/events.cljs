@@ -3,7 +3,6 @@
             [reagent.ratom :refer [make-reaction]]
             [status-im.utils.fx :as fx]
             [status-im.ethereum.json-rpc :as json-rpc]
-            [status-im.ethereum.contracts :as contracts]
             [status-im.ethereum.core :as ethereum]
             [status-im.ui.components.react :as react]
             [status-im.navigation :as navigation]
@@ -53,7 +52,7 @@
 (fx/defn go-to-invite
   {:events [::open-invite]}
   [{:keys [db] :as cofx}]
-  (let [contract (contracts/get-address db :status/acquisition)
+  (let [contract (get-in db [:acquisition :contract])
         accounts (filter #(not= (:type %) :watch) (get db :multiaccount/accounts))]
     (fx/merge cofx
               {::get-rewards (mapv (fn [{:keys [address]}]
@@ -137,8 +136,8 @@
 
 (fx/defn get-default-reward
   {:events [::get-default-reward]}
-  [{:keys [db]}]
-  {::get-rewards [{:contract   (contracts/get-address db :status/acquisition)
+  [{:keys [db]} contract]
+  {::get-rewards [{:contract   contract
                    :address    (ethereum/default-address db)
                    :on-success (fn [type data]
                                  (re-frame/dispatch [::default-reward-success type data]))}]})
@@ -146,10 +145,11 @@
 (re-frame/reg-sub-raw
  ::default-reward
  (fn [db]
-   (re-frame/dispatch [::get-default-reward])
-   (make-reaction
-    (fn []
-      (get-in @db [:acquisition :referral-reward])))))
+   (let [contract (get-in @db [:acquisition :contract])]
+     (re-frame/dispatch [::get-default-reward contract])
+     (make-reaction
+      (fn []
+        (get-in @db [:acquisition :referral-reward]))))))
 
 ;; Starter pack
 
@@ -164,17 +164,17 @@
 
 (fx/defn starter-pack
   {:events [::starter-pack]}
-  [{:keys [db]}]
-  (let [contract (contracts/get-address db :status/acquisition)]
-    {::json-rpc/eth-call [{:contract   contract
-                           :method     "getDefaultPack()"
-                           :outputs    ["address" "uint256" "address[]" "uint256[]" "uint256[]"]
-                           :on-success #(re-frame/dispatch [::starter-pack-amount (vec %) (prn %)])}]}))
+  [{:keys [db]} contract]
+  {::json-rpc/eth-call [{:contract   contract
+                         :method     "getDefaultPack()"
+                         :outputs    ["address" "uint256" "address[]" "uint256[]" "uint256[]"]
+                         :on-success #(re-frame/dispatch [::starter-pack-amount (vec %) (prn %)])}]})
 
 (re-frame/reg-sub-raw
  ::starter-pack
  (fn [db]
-   (re-frame/dispatch [::starter-pack])
-   (make-reaction
-    (fn []
-      (get-in @db [:acquisition :starter-pack :pack])))))
+   (let [contract (get-in @db [:acquisition :contract])]
+     (re-frame/dispatch [::starter-pack contract])
+     (make-reaction
+      (fn []
+        (get-in @db [:acquisition :starter-pack :pack]))))))

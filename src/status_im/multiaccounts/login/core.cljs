@@ -246,7 +246,7 @@
                                            ;;later on there is a check that filters have been initialized twice
                                            ;;so here we set it at 1 already so that it passes the check once it has
                                            ;;been initialized
-                                           :filters/initialized 1))
+                                          :filters/initialized 1))
                :filters/load-filters [[(:waku-enabled multiaccount) []]]}
               (finish-keycard-setup)
               (when first-account?

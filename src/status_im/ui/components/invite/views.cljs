@@ -13,7 +13,6 @@
             [status-im.ui.components.topbar :as topbar]
             [status-im.ui.components.invite.events :as events]
             [status-im.ui.components.invite.utils :refer [transform-tokens]]
-            [status-im.utils.config :as config]
             [quo.react-native :as rn]
             [clojure.string :as cstr]))
 
@@ -221,7 +220,7 @@
             (i18n/label :t/invite-button)]}]]))))
 
 (defn button []
-  (if-not config/referrals-invite-enabled?
+  (if-not @(re-frame/subscribe [::events/enabled])
     [rn/view {:style {:align-items :center}}
      [rn/view {:style (:tiny spacing/padding-vertical)}
       [quo/button {:on-press            #(re-frame/dispatch [::events/share-link nil])
@@ -248,7 +247,7 @@
             (i18n/label :t/invite-reward {:value  (str (get reward :eth-amount) " ETH")})]])]])))
 
 (defn list-item [{:keys [accessibility-label]}]
-  (if-not config/referrals-invite-enabled?
+  (if-not @(re-frame/subscribe [::events/enabled])
     [quo/list-item
      {:theme               :accent
       :title               (i18n/label :t/invite-friends)

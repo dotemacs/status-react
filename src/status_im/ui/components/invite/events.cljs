@@ -2,6 +2,7 @@
   (:require [re-frame.core :as re-frame]
             [reagent.ratom :refer [make-reaction]]
             [status-im.utils.fx :as fx]
+            [status-im.utils.config :as config]
             [status-im.ethereum.json-rpc :as json-rpc]
             [status-im.ethereum.core :as ethereum]
             [status-im.ui.components.react :as react]
@@ -178,3 +179,9 @@
      (make-reaction
       (fn []
         (get-in @db [:acquisition :starter-pack :pack]))))))
+
+(re-frame/reg-sub
+ ::enabled
+ (fn [db]
+   (and config/referrals-invite-enabled?
+        (get-in db [:acquisition :contract]))))

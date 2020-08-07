@@ -69,7 +69,8 @@
 (fx/defn has-referrer
   {:events [::has-referrer]}
   [{:keys [db] :as cofx} flow-state referrer]
-  (when referrer
+  (when (and referrer
+             (get-in db [:acquisition :contract]))
     (fx/merge cofx
               {:db (-> db
                        (assoc-in [:acquisition :referrer] referrer)

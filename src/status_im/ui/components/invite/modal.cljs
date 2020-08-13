@@ -42,24 +42,25 @@
   {:height         40
    :width          (- (* 40 c) (* 20 (dec c)))})
 
-(defn popover [{:keys [on-accept on-decline accept-label title description]}]
+(defn popover [{:keys [on-accept has-reward on-decline accept-label title description]}]
   (fn []
-    (let [pack    @(re-frame/subscribe [::invite/starter-pack])
+    (let [pack    (when has-reward @(re-frame/subscribe [::invite/starter-pack]))
           loading (#{(get gateway/network-statuses :initiated)
                      (get gateway/network-statuses :in-flight)}
                    @(re-frame/subscribe [::gateway/network-status]))
-          tokens  (utils/transform-tokens pack)]
+          tokens  (when has-reward (utils/transform-tokens pack))]
       [rn/view {:style {:align-items        :center
                         :padding-vertical   16
                         :padding-horizontal 16}}
-       [rn/view {:style (tokens-icons-style (count tokens))}
-        (for [[{name             :name
-                {source :source} :icon} _ i] tokens]
-          ^{:key name}
-          [rn/view {:style (token-icon-style i)}
-           [rn/image {:source (if (fn? source) (source) source)
-                      :style  {:width  40
-                               :height 40}}]])]
+       (when has-reward
+         [rn/view {:style (tokens-icons-style (count tokens))}
+          (for [[{name             :name
+                  {source :source} :icon} _ i] tokens]
+            ^{:key name}
+            [rn/view {:style (token-icon-style i)}
+             [rn/image {:source (if (fn? source) (source) source)
+                        :style  {:width  40
+                                 :height 40}}]])])
        [rn/view {:style {:padding 8}}
         [quo/text {:style {:margin-bottom 8}
                    :align :center
@@ -67,16 +68,17 @@
          title]
         [quo/text {:align :center}
          description]]
-       [rn/view {:style {:border-radius      8
-                         :border-width       1
-                         :border-color       (:ui-02 @colors/theme)
-                         :width              "100%"
-                         :margin-vertical    8
-                         :padding-vertical   8
-                         :padding-horizontal 12}}
-        (for [[k v] tokens]
-          ^{:key (:name k)}
-          [perk k v])]
+       (when has-reward
+         [rn/view {:style {:border-radius      8
+                           :border-width       1
+                           :border-color       (:ui-02 @colors/theme)
+                           :width              "100%"
+                           :margin-vertical    8
+                           :padding-vertical   8
+                           :padding-horizontal 12}}
+          (for [[k v] tokens]
+            ^{:key (:name k)}
+           [perk k v])])
        [rn/view {:style {:margin-vertical 8}}
         [quo/button {:on-press on-accept
                      :loading  loading}

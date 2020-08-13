@@ -99,3 +99,8 @@
   {}
   [_]
   {::check-referrer nil})
+
+(re-frame/reg-sub
+ ::metadata
+ (fn [db]
+   (get-in db [:acquisition :metadata])))

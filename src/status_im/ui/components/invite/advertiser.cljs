@@ -11,5 +11,7 @@
                     :on-decline   #(re-frame/dispatch [::advertiser/decision :decline])
                     :has-reward   has-reward
                     :accept-label (i18n/label :t/advertiser-starter-pack-accept)
-                    :title        (i18n/label :t/advertiser-starter-pack-title)
-                    :description  (i18n/label :t/advertiser-starter-pack-description)}]))
+                    :title        (when has-reward (i18n/label :t/advertiser-starter-pack-title))
+                    :description  (if has-reward
+                                    (i18n/label :t/advertiser-starter-pack-description)
+                                    (i18n/label :t/advertiser-description))}]))

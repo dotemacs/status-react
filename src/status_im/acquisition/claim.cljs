@@ -26,6 +26,7 @@
   [cofx {:keys [tx]}]
   (fx/merge cofx
             {::persistence/set-watch-tx       tx
-             ::persistence/set-referrer-state :accepted}
-            (add-tx-watcher tx)
+             ::persistence/set-referrer-state (if tx :accepted :claimed)}
+            (when tx
+              (add-tx-watcher tx))
             (notifications/request-permission)))

@@ -31,22 +31,32 @@
 ;; Select account sheet
 (defn- render-account [current-account change-account]
   (fn [account]
-    (let [{:keys [max-threshold attrib-count]}
+    (let [{:keys [max-threshold attrib-count bonuses]
+           :or   {bonuses 0}}
           @(re-frame/subscribe [:invite/account-reward (:address account)])]
-      [quo/list-item
-       {:theme     :accent
-        :active    (= (:address current-account) (:address account))
-        :disabled  (and max-threshold attrib-count
-                        (< max-threshold (inc attrib-count)))
-        :accessory :radio
-        :icon      [chat-icon/custom-icon-view-list (:name account) (:color account)]
-        :title     (:name account)
-        :subtitle  [:<>
-                    [quo/text {:monospace true
-                               :color     :secondary}
-                     (utils/get-shortened-checksum-address (:address account))]
-                    [threshold-badge max-threshold attrib-count]]
-        :on-press  #(change-account account)}])))
+      [:<>
+       [quo/list-item
+        {:theme     :accent
+         :active    (= (:address current-account) (:address account))
+         :disabled  (and max-threshold attrib-count
+                         (< max-threshold (inc attrib-count)))
+         :accessory :radio
+         :icon      [chat-icon/custom-icon-view-list (:name account) (:color account)]
+         :title     (:name account)
+         :subtitle  [:<>
+                     [quo/text {:monospace true
+                                :color     :secondary}
+                      (utils/get-shortened-checksum-address (:address account))]
+                     [threshold-badge max-threshold attrib-count]]
+         :on-press  #(change-account account)}]
+       [quo/list-item
+        {:theme    :accent
+         :disabled (not (pos? bonuses))
+         :icon     :main-icons/arrow-down
+         :title    (i18n/label :t/redeem-now)
+         :subtitle (i18n/label :t/redeem-amount {:quantity bonuses})
+         :on-press #(re-frame/dispatch [::events/redeem-bonus account])}]
+       [quo/separator {:style {:margin-vertical 10}}]])))
 
 (defn- accounts-list [accounts current-account change-account]
   (fn []
@@ -110,7 +120,8 @@
 
 (defn- referral-account []
   (fn [{:keys [account accounts change-account]}]
-    (let [{:keys [max-threshold attrib-count]}
+    (let [{:keys [max-threshold bonuses attrib-count]
+           :or   {bonuses 0}}
           @(re-frame/subscribe [:invite/account-reward (:address account)])]
       [rn/view {:style (:tiny spacing/padding-vertical)}
        [rn/view {:style (merge (:base spacing/padding-horizontal)
@@ -127,7 +138,14 @@
                     [threshold-badge max-threshold attrib-count]]
          :on-press #(re-frame/dispatch
                      [:bottom-sheet/show-sheet
-                      {:content (bottom-sheet-content accounts account change-account)}])}]])))
+                      {:content (bottom-sheet-content accounts account change-account)}])}]
+       [quo/list-item
+        {:theme    :accent
+         :disabled (not (pos? bonuses))
+         :icon     :main-icons/arrow-down
+         :title    (i18n/label :t/redeem-now)
+         :subtitle (i18n/label :t/redeem-amount {:quantity bonuses})
+         :on-press #(re-frame/dispatch [::events/redeem-bonus account])}]])))
 
 (defn reward-item [data description]
   (let [tokens      (transform-tokens data)

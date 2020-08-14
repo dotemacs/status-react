@@ -62,10 +62,11 @@
                         :style  {:width  40
                                  :height 40}}]])])
        [rn/view {:style {:padding 8}}
-        [quo/text {:style {:margin-bottom 8}
-                   :align :center
-                   :size  :x-large}
-         title]
+        (when title
+          [quo/text {:style {:margin-bottom 8}
+                     :align :center
+                     :size  :x-large}
+           title])
         [quo/text {:align :center}
          description]]
        (when has-reward
@@ -78,7 +79,7 @@
                            :padding-horizontal 12}}
           (for [[k v] tokens]
             ^{:key (:name k)}
-           [perk k v])])
+            [perk k v])])
        [rn/view {:style {:margin-vertical 8}}
         [quo/button {:on-press on-accept
                      :loading  loading}

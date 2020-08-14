@@ -39,8 +39,8 @@
    :shadow-opacity 1
    :shadow-color   (:shadow-01 @colors/theme)
    :shadow-offset  {:width 0 :height 4}
-   :width          40
-   :height         40
+   :width          20
+   :height         20
    :border-radius  20
    :position       :absolute
    :top            0

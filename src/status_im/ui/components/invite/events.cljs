@@ -2,8 +2,10 @@
   (:require [re-frame.core :as re-frame]
             [reagent.ratom :refer [make-reaction]]
             [status-im.utils.fx :as fx]
+            [status-im.i18n :as i18n]
             [status-im.ethereum.json-rpc :as json-rpc]
             [status-im.ethereum.contracts :as contracts]
+            [status-im.signing.core :as signing]
             [status-im.ethereum.core :as ethereum]
             [status-im.ui.components.react :as react]
             [status-im.navigation :as navigation]
@@ -76,8 +78,31 @@
   [_]
   {::terms-and-conditions nil})
 
-;; Invite reward
+(fx/defn redeem-success
+  {:events [::redeem-success]}
+  [{:keys [db]} account]
+  {:db               (assoc-in db [:acquisition :accounts account :bonuses] 0)
+   :utils/show-popup {:title   "Success"
+                      :content (i18n/label :t/redeem-success)}})
 
+(fx/defn redeem-error
+  {:events [::redeem-error]}
+  [cofx error]
+  {:utils/show-popup {:title   "Error"
+                      :content error}})
+
+(fx/defn redeem-bonus
+  {:events [::redeem-bonus]}
+  [{:keys [db] :as cofx} address]
+  (signing/eth-transaction-call
+   cofx
+   {:contract  (contracts/get-address db :status/acquisition)
+    :method    "withdraw(address[])"
+    :params    [[address]]
+    :on-result [::redeem-success address]
+    :on-error  [::redeem-error]}))
+
+;; Invite reward
 
 (re-frame/reg-sub
  :invite/accounts-reward
@@ -91,6 +116,13 @@
    (get accounts account)))
 
 (defn- get-reward [contract address on-success]
+  (json-rpc/eth-call
+   {:contract   contract
+    :method     "pendingAttributionCnt(address)"
+    :params     [address]
+    :outputs    ["uint256"]
+    :on-success (fn [response]
+                  (on-success :attribution response))})
   (json-rpc/eth-call
    {:contract   contract
     :method     "getReferralReward(address,bool)"
@@ -117,25 +149,37 @@
 (fx/defn default-reward-success
   {:events [::default-reward-success]}
   [{:keys [db]} type data]
-  (if (= :reward type)
+  (case type
+    :reward
     (let [[eth-amount tokens-count max-threshold attrib-count] data]
       {:db (assoc-in db [:acquisition :referral-reward] {:eth-amount    (money/wei->ether eth-amount)
                                                          :tokens-count  tokens-count
                                                          :max-threshold max-threshold
                                                          :attrib-count  attrib-count})})
+    :token
     (let [[address amount] data]
-      {:db (assoc-in db [:acquisition :referral-reward :tokens address] (money/wei->ether amount))})))
+      {:db (assoc-in db [:acquisition :referral-reward :tokens address] (money/wei->ether amount))})
+
+    :attribution
+    (let [[bonuses] data]
+      {:db (assoc-in db [:acquisition :referral-reward :bonuses] bonuses)})))
 
 (fx/defn get-reward-success
   {:events [::get-reward-success]}
   [{:keys [db]} account type data]
-  (if (= :reward type)
+  (case type
+    :reward
     (let [[eth-amount _ max-threshold attrib-count] data]
       {:db (assoc-in db [:acquisition :accounts account] {:eth-amount    (money/wei->ether eth-amount)
                                                           :max-threshold max-threshold
                                                           :attrib-count  attrib-count})})
+    :token
     (let [[address amount] data]
-      {:db (assoc-in db [:acquisition :accounts account :tokens address] (money/wei->ether amount))})))
+      {:db (assoc-in db [:acquisition :accounts account :tokens address] (money/wei->ether amount))})
+
+    :attribution
+    (let [[bonuses] data]
+      {:db (assoc-in db [:acquisition :accounts account :bonuses] bonuses)})))
 
 (fx/defn get-default-reward
   {:events [::get-default-reward]}

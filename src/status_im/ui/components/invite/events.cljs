@@ -81,9 +81,10 @@
 (fx/defn redeem-success
   {:events [::redeem-success]}
   [{:keys [db]} account]
-  {:db               (assoc-in db [:acquisition :accounts account :bonuses] 0)
-   :utils/show-popup {:title   "Success"
-                      :content (i18n/label :t/redeem-success)}})
+  {:db (assoc-in db [:acquisition :accounts account :bonuses] 0)
+   ;; :utils/show-popup {:title   "Success"
+   ;;                    :content (i18n/label :t/redeem-success)}
+   })
 
 (fx/defn redeem-error
   {:events [::redeem-error]}

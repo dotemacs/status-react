@@ -2,7 +2,7 @@
   (:require [re-frame.core :as re-frame]
             [reagent.ratom :refer [make-reaction]]
             [status-im.utils.fx :as fx]
-            [status-im.i18n :as i18n]
+            [status-im.ethereum.abi-spec :as abi-spec]
             [status-im.ethereum.json-rpc :as json-rpc]
             [status-im.ethereum.contracts :as contracts]
             [status-im.signing.core :as signing]
@@ -12,7 +12,8 @@
             [status-im.utils.universal-links.utils :as universal-links]
             [status-im.acquisition.core :as acquisition]
             [status-im.acquisition.persistance :as persistence]
-            [status-im.utils.money :as money]))
+            [status-im.utils.money :as money]
+            [status-im.ui.components.bottom-sheet.core :as bottom-sheet]))
 
 (def privacy-policy-link "https://status.im/referral-program/terms-and-conditions")
 
@@ -95,13 +96,14 @@
 (fx/defn redeem-bonus
   {:events [::redeem-bonus]}
   [{:keys [db] :as cofx} {:keys [address]}]
-  (signing/eth-transaction-call
-   cofx
-   {:contract  (contracts/get-address db :status/acquisition)
-    :method    "withdraw(address[])"
-    :params    [[address]]
-    :on-result [::redeem-success address]
-    :on-error  [::redeem-error]}))
+  (fx/merge cofx
+            (bottom-sheet/hide-bottom-sheet)
+            (signing/sign
+             {:tx-obj    {:to   (contracts/get-address db :status/acquisition)
+                          :from address
+                          :data (abi-spec/encode "withdrawAttributions()" [])}
+              :on-result [::redeem-success address]
+              :on-error  [::redeem-error]})))
 
 ;; Invite reward
 

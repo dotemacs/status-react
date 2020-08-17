@@ -20,8 +20,9 @@
                   portfolio-value [:account-portfolio-value address]
                   prices-loading? [:prices-loading?]]
     [react/touchable-highlight
-     {:on-press      #(re-frame/dispatch [:navigate-to :wallet-account account])
-      :on-long-press #(re-frame/dispatch [:bottom-sheet/show-sheet
+     {:on-press               #(re-frame/dispatch [:navigate-to :wallet-account account])
+      :accessibility-label     (str "accountcard" name)
+      :on-long-press           #(re-frame/dispatch [:bottom-sheet/show-sheet
                                           {:content        (fn [] [sheets/send-receive account type])
                                            :content-height 130}])}
      [react/view {:style (styles/card color)}
@@ -45,9 +46,10 @@
         address]]]]))
 
 (defn add-card []
-  [react/touchable-highlight {:on-press #(re-frame/dispatch [:bottom-sheet/show-sheet
+  [react/touchable-highlight {:on-press           #(re-frame/dispatch [:bottom-sheet/show-sheet
                                                              {:content        sheets/add-account
-                                                              :content-height 260}])}
+                                                              :content-height 260}])
+                              :accessibility-label "add-new-account"}
    [react/view {:style (styles/add-card)}
     [react/view {:width       40 :height 40 :justify-content :center :border-radius 20
                  :align-items :center :background-color colors/blue-transparent-10 :margin-bottom 8}

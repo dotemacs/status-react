@@ -22,7 +22,7 @@
     [react/touchable-highlight
      {:on-press               #(re-frame/dispatch [:navigate-to :wallet-account account])
       :accessibility-label     (str "accountcard" name)
-      :on-long-press           #(re-frame/dispatch [:bottom-sheet/show-sheet
+      :on-long-press          #(re-frame/dispatch [:bottom-sheet/show-sheet
                                           {:content        (fn [] [sheets/send-receive account type])
                                            :content-height 130}])}
      [react/view {:style (styles/card color)}

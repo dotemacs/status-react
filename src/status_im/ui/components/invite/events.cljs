@@ -14,7 +14,7 @@
             [status-im.acquisition.persistance :as persistence]
             [status-im.utils.money :as money]))
 
-(def privacy-policy-link "https://get.status.im")
+(def privacy-policy-link "https://status.im/referral-program/terms-and-conditions")
 
 (re-frame/reg-fx
  ::share

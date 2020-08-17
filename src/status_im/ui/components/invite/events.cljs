@@ -94,7 +94,7 @@
 
 (fx/defn redeem-bonus
   {:events [::redeem-bonus]}
-  [{:keys [db] :as cofx} address]
+  [{:keys [db] :as cofx} {:keys [address]}]
   (signing/eth-transaction-call
    cofx
    {:contract  (contracts/get-address db :status/acquisition)
@@ -122,7 +122,7 @@
     :method     "pendingAttributionCnt(address)"
     :params     [address]
     :outputs    ["uint256"]
-    :on-success (fn [response]
+    :on-success (fn [[response]]
                   (on-success :attribution response))})
   (json-rpc/eth-call
    {:contract   contract
@@ -162,8 +162,7 @@
       {:db (assoc-in db [:acquisition :referral-reward :tokens address] (money/wei->ether amount))})
 
     :attribution
-    (let [[bonuses] data]
-      {:db (assoc-in db [:acquisition :referral-reward :bonuses] bonuses)})))
+    {:db (assoc-in db [:acquisition :referral-reward :bonuses] data)}))
 
 (fx/defn get-reward-success
   {:events [::get-reward-success]}
@@ -179,8 +178,7 @@
       {:db (assoc-in db [:acquisition :accounts account :tokens address] (money/wei->ether amount))})
 
     :attribution
-    (let [[bonuses] data]
-      {:db (assoc-in db [:acquisition :accounts account :bonuses] bonuses)})))
+    {:db (assoc-in db [:acquisition :accounts account :bonuses] data)}))
 
 (fx/defn get-default-reward
   {:events [::get-default-reward]}

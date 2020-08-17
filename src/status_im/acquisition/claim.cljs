@@ -13,6 +13,7 @@
                                        :message (i18n/label :t/starter-pack-received-description)}})
 
 (fx/defn add-tx-watcher
+  {:events [::add-tx-watcher]}
   [cofx tx]
   (transaction/watch-transaction cofx
                                  tx
